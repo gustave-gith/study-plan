@@ -45,21 +45,44 @@ export default function Home() {
 
         {/* Feature highlights */}
         <div className="grid w-full gap-4 sm:grid-cols-3">
-          {[
-            { icon: "📋", label: "Track Tasks" },
-            { icon: "⏰", label: "Set Deadlines" },
-            { icon: "🎯", label: "Stay Focused" },
-          ].map((item) => (
-            <div
-              key={item.label}
-              className="rounded-xl border border-white/10 bg-white/5 px-5 py-4 backdrop-blur-sm transition-colors hover:border-indigo-500/30 hover:bg-white/10"
-            >
-              <span className="text-2xl">{item.icon}</span>
-              <p className="mt-1 text-sm font-medium text-slate-200">
-                {item.label}
-              </p>
+          <Link
+            href="/tasks"
+            className="group flex flex-col items-center rounded-2xl border border-white/10 bg-white/5 px-5 py-6 text-center backdrop-blur-sm transition-all hover:-translate-y-1 hover:border-indigo-500/50 hover:bg-white/10 hover:shadow-xl hover:shadow-indigo-500/20"
+          >
+            <div className="mb-3 flex h-12 w-12 items-center justify-center rounded-full bg-indigo-500/20 text-indigo-300 transition-colors group-hover:bg-indigo-500/30 group-hover:text-indigo-200">
+              <svg xmlns="http://www.w3.org/2000/svg" className="h-6 w-6" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
+                <path strokeLinecap="round" strokeLinejoin="round" d="M9 5H7a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2M9 5a2 2 0 012-2h2a2 2 0 012 2" />
+              </svg>
             </div>
-          ))}
+            <h3 className="text-lg font-semibold text-slate-100">Track Tasks</h3>
+            <p className="mt-2 text-sm text-slate-400">View all your upcoming assignments and homework in one place.</p>
+          </Link>
+
+          <Link
+            href="/tasks/new"
+            className="group flex flex-col items-center rounded-2xl border border-white/10 bg-white/5 px-5 py-6 text-center backdrop-blur-sm transition-all hover:-translate-y-1 hover:border-violet-500/50 hover:bg-white/10 hover:shadow-xl hover:shadow-violet-500/20"
+          >
+            <div className="mb-3 flex h-12 w-12 items-center justify-center rounded-full bg-violet-500/20 text-violet-300 transition-colors group-hover:bg-violet-500/30 group-hover:text-violet-200">
+              <svg xmlns="http://www.w3.org/2000/svg" className="h-6 w-6" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
+                <path strokeLinecap="round" strokeLinejoin="round" d="M12 4v16m8-8H4" />
+              </svg>
+            </div>
+            <h3 className="text-lg font-semibold text-slate-100">Set Deadlines</h3>
+            <p className="mt-2 text-sm text-slate-400">Create new tasks, prioritize them, and never miss a due date.</p>
+          </Link>
+
+          <Link
+            href="/tasks"
+            className="group flex flex-col items-center rounded-2xl border border-white/10 bg-white/5 px-5 py-6 text-center backdrop-blur-sm transition-all hover:-translate-y-1 hover:border-cyan-500/50 hover:bg-white/10 hover:shadow-xl hover:shadow-cyan-500/20"
+          >
+            <div className="mb-3 flex h-12 w-12 items-center justify-center rounded-full bg-cyan-500/20 text-cyan-300 transition-colors group-hover:bg-cyan-500/30 group-hover:text-cyan-200">
+              <svg xmlns="http://www.w3.org/2000/svg" className="h-6 w-6" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
+                <path strokeLinecap="round" strokeLinejoin="round" d="M5 13l4 4L19 7" />
+              </svg>
+            </div>
+            <h3 className="text-lg font-semibold text-slate-100">Stay Focused</h3>
+            <p className="mt-2 text-sm text-slate-400">Mark items as completed and enjoy a clearer, focused mind.</p>
+          </Link>
         </div>
 
         {/* CTA Button */}
