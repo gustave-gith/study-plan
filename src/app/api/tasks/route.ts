@@ -110,3 +110,33 @@ export async function DELETE(request: NextRequest) {
     );
   }
 }
+
+// PATCH /api/tasks?id={id} — update a task (e.g., mark as complete)
+export async function PATCH(request: NextRequest) {
+  try {
+    const idParam = request.nextUrl.searchParams.get("id");
+    if (!idParam) {
+      return NextResponse.json({ error: "Missing task ID" }, { status: 400 });
+    }
+
+    const id = parseInt(idParam, 10);
+    const updates = await request.json();
+    
+    let tasks = readTasks();
+    const taskIndex = tasks.findIndex((t) => t.id === id);
+    
+    if (taskIndex === -1) {
+      return NextResponse.json({ error: "Task not found" }, { status: 404 });
+    }
+
+    tasks[taskIndex] = { ...tasks[taskIndex], ...updates };
+    writeTasks(tasks);
+
+    return NextResponse.json(tasks[taskIndex], { status: 200 });
+  } catch {
+    return NextResponse.json(
+      { error: "Failed to update task" },
+      { status: 500 }
+    );
+  }
+}

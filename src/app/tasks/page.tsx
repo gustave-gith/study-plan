@@ -99,6 +99,30 @@ export default function TasksPage() {
     }
   }
 
+  async function handleToggle(id: number, currentStatus: boolean) {
+    const newStatus = !currentStatus;
+    
+    // Optimistic UI update
+    setTasks((prev) =>
+      prev.map((t) => (t.id === id ? { ...t, completed: newStatus } : t))
+    );
+
+    try {
+      const res = await fetch(`/api/tasks?id=${id}`, {
+        method: "PATCH",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ completed: newStatus }),
+      });
+      if (!res.ok) throw new Error("Failed to update status");
+    } catch (err: any) {
+      // Revert state if failed
+      setTasks((prev) =>
+        prev.map((t) => (t.id === id ? { ...t, completed: currentStatus } : t))
+      );
+      setError("Failed to update task status.");
+    }
+  }
+
   const pending = tasks.filter((t) => !t.completed);
   const completed = tasks.filter((t) => t.completed);
 
@@ -235,6 +259,7 @@ export default function TasksPage() {
                   task={task}
                   onDelete={handleDelete}
                   isDeleting={deletingId === task.id}
+                  onToggle={handleToggle}
                 />
               ))}
             </div>
@@ -255,6 +280,7 @@ export default function TasksPage() {
                   task={task}
                   onDelete={handleDelete}
                   isDeleting={deletingId === task.id}
+                  onToggle={handleToggle}
                 />
               ))}
             </div>
@@ -273,9 +299,10 @@ interface TaskCardProps {
   task: Task;
   onDelete: (id: number) => void;
   isDeleting: boolean;
+  onToggle: (id: number, currentStatus: boolean) => void;
 }
 
-function TaskCard({ task, onDelete, isDeleting }: TaskCardProps) {
+function TaskCard({ task, onDelete, isDeleting, onToggle }: TaskCardProps) {
   const badge =
     subjectColors[task.subject] ??
     "bg-slate-500/20 text-slate-300 border-slate-500/30";
@@ -292,11 +319,16 @@ function TaskCard({ task, onDelete, isDeleting }: TaskCardProps) {
       <div className="flex items-center justify-between">
         <div className="flex items-center gap-2">
           {/* Checkbox icon */}
-          <div
-            className={`flex h-7 w-7 shrink-0 items-center justify-center rounded-full border ${
+          <button
+            onClick={(e) => {
+              e.preventDefault();
+              onToggle(task.id, task.completed);
+            }}
+            title={task.completed ? "Mark as incomplete" : "Mark as complete"}
+            className={`flex h-7 w-7 shrink-0 items-center justify-center rounded-full border transition-colors focus:outline-none focus:ring-2 focus:ring-indigo-500/50 ${
               task.completed
-                ? "border-emerald-500/50 bg-emerald-500/20 text-emerald-400"
-                : "border-white/20 bg-white/5 text-slate-500"
+                ? "border-emerald-500/50 bg-emerald-500/20 text-emerald-400 hover:bg-emerald-500/30"
+                : "border-white/20 bg-white/5 text-slate-500 hover:border-emerald-500/50 hover:bg-white/10"
             }`}
           >
             {task.completed ? (
@@ -313,9 +345,9 @@ function TaskCard({ task, onDelete, isDeleting }: TaskCardProps) {
                 />
               </svg>
             ) : (
-              <span className="h-2.5 w-2.5 rounded-full bg-slate-600" />
+              <span className="h-2.5 w-2.5 rounded-full bg-slate-600 transition-colors hover:bg-slate-400" />
             )}
-          </div>
+          </button>
 
           {/* Subject badge */}
           <span
