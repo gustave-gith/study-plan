@@ -69,6 +69,8 @@ export default function TasksPage() {
   const [tasks, setTasks] = useState<Task[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
+  const [successMsg, setSuccessMsg] = useState<string | null>(null);
+  const [deletingId, setDeletingId] = useState<number | null>(null);
 
   useEffect(() => {
     fetch("/api/tasks")
@@ -80,6 +82,22 @@ export default function TasksPage() {
       .catch((err) => setError(err.message))
       .finally(() => setLoading(false));
   }, []);
+
+  async function handleDelete(id: number) {
+    if (!window.confirm("Are you sure you want to delete this task?")) return;
+    setDeletingId(id);
+    try {
+      const res = await fetch(`/api/tasks?id=${id}`, { method: "DELETE" });
+      if (!res.ok) throw new Error("Failed to delete task");
+      setTasks((prev) => prev.filter((t) => t.id !== id));
+      setSuccessMsg("Task deleted successfully!");
+      setTimeout(() => setSuccessMsg(null), 3000);
+    } catch (err: any) {
+      setError(err.message);
+    } finally {
+      setDeletingId(null);
+    }
+  }
 
   const pending = tasks.filter((t) => !t.completed);
   const completed = tasks.filter((t) => t.completed);
@@ -172,6 +190,12 @@ export default function TasksPage() {
 
       {/* Main content */}
       <main className="relative z-10 mx-auto max-w-5xl px-6 py-12">
+        {successMsg && (
+          <div className="mb-6 rounded-xl border border-emerald-500/20 bg-emerald-500/10 p-4 text-sm font-medium text-emerald-400">
+            {successMsg}
+          </div>
+        )}
+
         {/* Page title */}
         <div className="mb-10 flex flex-col items-start justify-between gap-4 sm:flex-row sm:items-end">
           <div>
@@ -206,7 +230,12 @@ export default function TasksPage() {
             </h2>
             <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
               {pending.map((task) => (
-                <TaskCard key={task.id} task={task} />
+                <TaskCard
+                  key={task.id}
+                  task={task}
+                  onDelete={handleDelete}
+                  isDeleting={deletingId === task.id}
+                />
               ))}
             </div>
           </section>
@@ -221,7 +250,12 @@ export default function TasksPage() {
             </h2>
             <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
               {completed.map((task) => (
-                <TaskCard key={task.id} task={task} />
+                <TaskCard
+                  key={task.id}
+                  task={task}
+                  onDelete={handleDelete}
+                  isDeleting={deletingId === task.id}
+                />
               ))}
             </div>
           </section>
@@ -235,7 +269,13 @@ export default function TasksPage() {
 /*  Task Card                                                          */
 /* ------------------------------------------------------------------ */
 
-function TaskCard({ task }: { task: Task }) {
+interface TaskCardProps {
+  task: Task;
+  onDelete: (id: number) => void;
+  isDeleting: boolean;
+}
+
+function TaskCard({ task, onDelete, isDeleting }: TaskCardProps) {
   const badge =
     subjectColors[task.subject] ??
     "bg-slate-500/20 text-slate-300 border-slate-500/30";
@@ -250,15 +290,51 @@ function TaskCard({ task }: { task: Task }) {
     >
       {/* Status & subject row */}
       <div className="flex items-center justify-between">
-        {/* Checkbox icon */}
-        <div
-          className={`flex h-7 w-7 shrink-0 items-center justify-center rounded-full border ${
-            task.completed
-              ? "border-emerald-500/50 bg-emerald-500/20 text-emerald-400"
-              : "border-white/20 bg-white/5 text-slate-500"
-          }`}
+        <div className="flex items-center gap-2">
+          {/* Checkbox icon */}
+          <div
+            className={`flex h-7 w-7 shrink-0 items-center justify-center rounded-full border ${
+              task.completed
+                ? "border-emerald-500/50 bg-emerald-500/20 text-emerald-400"
+                : "border-white/20 bg-white/5 text-slate-500"
+            }`}
+          >
+            {task.completed ? (
+              <svg
+                xmlns="http://www.w3.org/2000/svg"
+                className="h-4 w-4"
+                viewBox="0 0 20 20"
+                fill="currentColor"
+              >
+                <path
+                  fillRule="evenodd"
+                  d="M16.707 5.293a1 1 0 010 1.414l-8 8a1 1 0 01-1.414 0l-4-4a1 1 0 011.414-1.414L8 12.586l7.293-7.293a1 1 0 011.414 0z"
+                  clipRule="evenodd"
+                />
+              </svg>
+            ) : (
+              <span className="h-2.5 w-2.5 rounded-full bg-slate-600" />
+            )}
+          </div>
+
+          {/* Subject badge */}
+          <span
+            className={`rounded-full border px-2.5 py-0.5 text-xs font-medium ${badge}`}
+          >
+            {task.subject}
+          </span>
+        </div>
+
+        {/* Delete Action */}
+        <button
+          onClick={() => onDelete(task.id)}
+          disabled={isDeleting}
+          title="Delete task"
+          className="rounded-md p-1.5 text-slate-500 transition-all hover:bg-red-500/20 hover:text-red-400 focus:bg-red-500/20 focus:text-red-400 focus:outline-none disabled:opacity-50"
         >
-          {task.completed ? (
+          {isDeleting ? (
+            <div className="h-4 w-4 animate-spin rounded-full border-2 border-red-400 border-t-transparent" />
+          ) : (
             <svg
               xmlns="http://www.w3.org/2000/svg"
               className="h-4 w-4"
@@ -267,21 +343,12 @@ function TaskCard({ task }: { task: Task }) {
             >
               <path
                 fillRule="evenodd"
-                d="M16.707 5.293a1 1 0 010 1.414l-8 8a1 1 0 01-1.414 0l-4-4a1 1 0 011.414-1.414L8 12.586l7.293-7.293a1 1 0 011.414 0z"
+                d="M9 2a1 1 0 00-.894.553L7.382 4H4a1 1 0 000 2v10a2 2 0 002 2h8a2 2 0 002-2V6a1 1 0 100-2h-3.382l-.724-1.447A1 1 0 0011 2H9zM7 8a1 1 0 012 0v6a1 1 0 11-2 0V8zm5-1a1 1 0 00-1 1v6a1 1 0 102 0V8a1 1 0 00-1-1z"
                 clipRule="evenodd"
               />
             </svg>
-          ) : (
-            <span className="h-2.5 w-2.5 rounded-full bg-slate-600" />
           )}
-        </div>
-
-        {/* Subject badge */}
-        <span
-          className={`rounded-full border px-2.5 py-0.5 text-xs font-medium ${badge}`}
-        >
-          {task.subject}
-        </span>
+        </button>
       </div>
 
       {/* Title */}

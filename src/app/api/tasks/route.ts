@@ -1,4 +1,4 @@
-import { NextResponse } from "next/server";
+import { NextResponse, NextRequest } from "next/server";
 import fs from "fs";
 import path from "path";
 
@@ -78,6 +78,34 @@ export async function POST(request: Request) {
   } catch {
     return NextResponse.json(
       { error: "Failed to create task" },
+      { status: 500 }
+    );
+  }
+}
+
+// DELETE /api/tasks?id={id} — delete a task
+export async function DELETE(request: NextRequest) {
+  try {
+    const idParam = request.nextUrl.searchParams.get("id");
+    if (!idParam) {
+      return NextResponse.json({ error: "Missing task ID" }, { status: 400 });
+    }
+
+    const id = parseInt(idParam, 10);
+    let tasks = readTasks();
+    
+    // Check if task exists
+    if (!tasks.some((t) => t.id === id)) {
+      return NextResponse.json({ error: "Task not found" }, { status: 404 });
+    }
+
+    tasks = tasks.filter((t) => t.id !== id);
+    writeTasks(tasks);
+
+    return NextResponse.json({ success: true }, { status: 200 });
+  } catch {
+    return NextResponse.json(
+      { error: "Failed to delete task" },
       { status: 500 }
     );
   }
