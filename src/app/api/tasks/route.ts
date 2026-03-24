@@ -2,7 +2,8 @@ import { NextResponse } from "next/server";
 import fs from "fs";
 import path from "path";
 
-const filePath = path.join(process.cwd(), "data", "tasks.json");
+const initialFilePath = path.join(process.cwd(), "data", "tasks.json");
+const tmpFilePath = "/tmp/tasks.json";
 
 interface Task {
   id: number;
@@ -14,12 +15,21 @@ interface Task {
 }
 
 function readTasks(): Task[] {
-  const raw = fs.readFileSync(filePath, "utf-8");
+  // In serverless environments, check if we have modified data in /tmp first
+  if (fs.existsSync(tmpFilePath)) {
+    try {
+      const raw = fs.readFileSync(tmpFilePath, "utf-8");
+      return JSON.parse(raw) as Task[];
+    } catch {}
+  }
+  // Fall back to original seed data
+  const raw = fs.readFileSync(initialFilePath, "utf-8");
   return JSON.parse(raw) as Task[];
 }
 
 function writeTasks(tasks: Task[]): void {
-  fs.writeFileSync(filePath, JSON.stringify(tasks, null, 2), "utf-8");
+  // Vercel deployment files are read-only. We must write to the /tmp directory.
+  fs.writeFileSync(tmpFilePath, JSON.stringify(tasks, null, 2), "utf-8");
 }
 
 // GET /api/tasks — return all tasks
